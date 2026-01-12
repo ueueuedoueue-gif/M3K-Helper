@@ -42,6 +42,7 @@ import com.remtrik.m3khelper.R.drawable.ic_folder
 import com.remtrik.m3khelper.R.drawable.ic_folder_open
 import com.remtrik.m3khelper.R.drawable.ic_windows
 import com.remtrik.m3khelper.R.string
+import com.remtrik.m3khelper.util.funcs.BootBackupState
 import com.remtrik.m3khelper.util.funcs.ErrorType
 import com.remtrik.m3khelper.util.funcs.MountStatus
 import com.remtrik.m3khelper.util.variables.commandHandler
@@ -256,7 +257,7 @@ fun BackupButton() {
                                             commandResult =
                                                 commandHandler.dumpBoot(
                                                     ErrorType.QUICKBOOT_ERROR,
-                                                    2
+                                                    BootBackupState.ANDROID
                                                 )
                                             if (!commandResult.isSuccess) {
                                                 commandError.value = commandResult.output[0]
@@ -288,7 +289,7 @@ fun BackupButton() {
                                                     commandResult =
                                                         commandHandler.dumpBoot(
                                                             ErrorType.BOOTBACKUP_ERROR,
-                                                            1
+                                                            BootBackupState.WINDOWS
                                                         )
                                                     if (!commandResult.isSuccess) {
                                                         commandError.value = commandResult.output[0]

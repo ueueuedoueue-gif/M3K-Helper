@@ -86,7 +86,7 @@ private fun LinksContent(
         if (isLandscape) {
             LandscapeLinksLayout(spacing, deviceCard, uriHandler)
         } else {
-            PortraitLinksLayout(spacing, deviceCard, uriHandler)
+            PortraitLinksLayout(deviceCard, uriHandler)
         }
     }
 }
@@ -116,7 +116,6 @@ private fun LandscapeLinksLayout(
 
 @Composable
 private fun PortraitLinksLayout(
-    spacing: Dp,
     deviceCard: DeviceCard,
     uriHandler: UriHandler
 ) {
@@ -144,37 +143,34 @@ private fun FilesLinks(
     deviceCard: DeviceCard,
     uriHandler: UriHandler
 ) {
-    when {
-        deviceCard.unifiedDriversUEFI &&
-                !(deviceCard.noDrivers || deviceCard.noUEFI) -> {
-            LinkButton(
-                title = stringResource(R.string.driversuefi, deviceCard.deviceName),
-                subtitle = null,
-                link = deviceCard.driversLink,
-                icon = R.drawable.ic_drivers,
-                uriHandler = uriHandler
-            )
-        }
+    if (deviceCard.unifiedDriversUEFI) {
+        LinkButton(
+            title = stringResource(R.string.driversuefi, deviceCard.deviceName),
+            subtitle = null,
+            link = deviceCard.driversLink,
+            icon = R.drawable.ic_drivers,
+            uriHandler = uriHandler
+        )
+    }
 
-        !deviceCard.noDrivers && !deviceCard.unifiedDriversUEFI -> {
-            LinkButton(
-                title = stringResource(R.string.drivers, deviceCard.deviceName),
-                subtitle = null,
-                link = deviceCard.driversLink,
-                icon = R.drawable.ic_drivers,
-                uriHandler = uriHandler
-            )
-        }
+    if (!deviceCard.noDrivers && !deviceCard.unifiedDriversUEFI) {
+        LinkButton(
+            title = stringResource(R.string.drivers, deviceCard.deviceName),
+            subtitle = null,
+            link = deviceCard.driversLink,
+            icon = R.drawable.ic_drivers,
+            uriHandler = uriHandler
+        )
+    }
 
-        !deviceCard.noUEFI && !deviceCard.unifiedDriversUEFI -> {
-            LinkButton(
-                title = stringResource(R.string.uefi, deviceCard.deviceName),
-                subtitle = null,
-                link = deviceCard.uefiLink,
-                icon = R.drawable.ic_uefi,
-                uriHandler = uriHandler
-            )
-        }
+    if (!deviceCard.noUEFI && !deviceCard.unifiedDriversUEFI) {
+        LinkButton(
+            title = stringResource(R.string.uefi, deviceCard.deviceName),
+            subtitle = null,
+            link = deviceCard.uefiLink,
+            icon = R.drawable.ic_uefi,
+            uriHandler = uriHandler
+        )
     }
 }
 

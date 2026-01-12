@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -64,8 +63,6 @@ fun HomeScreen(navigator: DestinationsNavigator) {
     val mountError by remember { derivedStateOf { showMountErrorDialog.value } }
     val quickBootError by remember { derivedStateOf { showQuickBootErrorDialog.value } }
     val commandErrorText by remember { derivedStateOf { commandError.value } }
-
-    println(maxWidth)
 
     Scaffold(
         topBar = {

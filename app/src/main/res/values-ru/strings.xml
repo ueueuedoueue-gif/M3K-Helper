@@ -78,5 +78,6 @@
     <string name="backupboot_error">Не удалось сделать резервную копию текущего boot образа</string>
     <string name="error_reason">Причина: %1$s</string>
     <string name="mount_error_default">Невозможно монтировать Windows, скорее всего отсутствует раздел</string>
+    <string name="manual_reboot_toast">Если вы уверены, что все впорядке, перезагрузитесь вручную</string>
 
 </resources>

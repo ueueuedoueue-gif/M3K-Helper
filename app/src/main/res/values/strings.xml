@@ -89,5 +89,6 @@
     <string name="backupboot_error">Failed to backup boot</string>
     <string name="error_reason">Reason: %1$s</string>
     <string name="mount_error_default">Windows can\’t be mounted, probably missing partition</string>
+    <string name="manual_reboot_toast">If you sure everything is right please reboot manually</string>
 
 </resources>

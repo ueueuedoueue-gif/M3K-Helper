@@ -120,23 +120,23 @@ private fun rememberThemeState(): ThemeState {
             enableThemeEngine = enableThemeEngine,
             enableMaterialU = enableMaterialU,
             paletteStyle = paletteStyle,
-            onThemeEngineChanged = { new ->
-                enableThemeEngine = new
-                if (new) enableMaterialU = false
-                save("theme_engine_enable", new)
-                if (new) save("theme_engine_enable_materialu", false)
+            onThemeEngineChanged = {
+                enableThemeEngine = it
+                if (it) enableMaterialU = false
+                save("theme_engine_enable", it)
+                if (it) save("theme_engine_enable_materialu", false)
                 triggerThemeReapply()
             },
-            onMaterialUChanged = { new ->
-                enableMaterialU = new
-                if (new) enableThemeEngine = false
-                save("theme_engine_enable_materialu", new)
-                if (new) save("theme_engine_enable", false)
+            onMaterialUChanged = {
+                enableMaterialU = it
+                if (it) enableThemeEngine = false
+                save("theme_engine_enable_materialu", it)
+                if (it) save("theme_engine_enable", false)
                 triggerThemeReapply()
             },
-            onPaletteStyleChanged = { newStyle ->
-                paletteStyle = newStyle
-                save("theme_engine_palette_style", newStyle)
+            onPaletteStyleChanged = {
+                paletteStyle = it
+                save("theme_engine_palette_style", it)
                 triggerThemeReapply()
             }
         )

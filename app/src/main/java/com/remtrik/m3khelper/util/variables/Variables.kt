@@ -1,6 +1,7 @@
 package com.remtrik.m3khelper.util.variables
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Build
 import android.os.Parcelable
 import android.util.Log
@@ -20,6 +21,7 @@ import com.remtrik.m3khelper.R.string
 import com.remtrik.m3khelper.prefs
 import com.remtrik.m3khelper.util.DeviceCard
 import com.remtrik.m3khelper.util.deviceCardsArray
+import com.remtrik.m3khelper.util.funcs.BootBackupState
 import com.remtrik.m3khelper.util.funcs.CommandResult
 import com.remtrik.m3khelper.util.funcs.Commands
 import com.remtrik.m3khelper.util.funcs.ErrorType
@@ -31,6 +33,7 @@ import com.topjohnwu.superuser.ShellUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import java.util.concurrent.Executors
@@ -54,23 +57,22 @@ data class DeviceData(
             Build.DEVICE,
             ShellUtils.fastCmd("getprop ro.product.device"),
             ShellUtils.fastCmd("getprop ro.lineage.device")
-        ),
+        ).distinct(),
     var savedDeviceCard: DeviceCard =
         deviceCardsArray.getOrNull(prefs.getInt("saved_device_card", 0))
             ?: unknownCard,
-    var overrideDeviceCard: MutableState<Boolean> =
-        mutableStateOf(prefs.getBoolean("override_device", false)),
+    var overrideDeviceCard: MutableStateFlow<Boolean> =
+        MutableStateFlow(prefs.getBoolean("override_device", false)),
     val ram: String = getMemory(),
-    val slot: String = ShellUtils.fastCmd("getprop ro.boot.slot_suffix").drop(1).uppercase(),
-    var panelType: MutableState<String> = mutableStateOf(
+    val slot: String = ShellUtils.fastCmd("getprop ro.boot.slot_suffix"),
+    var panelType: MutableStateFlow<String> = MutableStateFlow(
         prefs.getString("saved_device_panel", string.unknown_panel.string()).toString()
     ),
     var uefiCards: List<UEFICard> = emptyList(),
-    var isSpecial: MutableState<Boolean> = mutableStateOf(false),
+    var isSpecial: MutableStateFlow<Boolean> = MutableStateFlow(false),
 
     )
 
-private val backgroundExecutor = Executors.newFixedThreadPool(2)
 private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 val device: DeviceData by lazy { DeviceData() }
@@ -81,14 +83,14 @@ const val SDCARD_PATH: String = "/sdcard"
 val currentDeviceCommands: DeviceCommands by lazy { DeviceCommands() }
 
 // UI State
-private var BootIsPresent: MutableState<Int> = mutableIntStateOf(string.no)
-private var WindowsIsPresent: MutableState<Int> = mutableIntStateOf(string.no)
-val showWarningCard: MutableState<Boolean> = mutableStateOf(true)
-var showAboutCard: MutableState<Boolean> = mutableStateOf(false)
-var commandError: MutableState<String> = mutableStateOf("")
-var showBootBackupErrorDialog: MutableState<Boolean> = mutableStateOf(false)
-var showMountErrorDialog: MutableState<Boolean> = mutableStateOf(false)
-var showQuickBootErrorDialog: MutableState<Boolean> = mutableStateOf(false)
+private var BootIsPresent: MutableStateFlow<Int> = MutableStateFlow(string.no)
+private var WindowsIsPresent: MutableStateFlow<Int> = MutableStateFlow(string.no)
+val showWarningCard: MutableStateFlow<Boolean> = MutableStateFlow(true)
+var showAboutCard: MutableStateFlow<Boolean> = MutableStateFlow(false)
+var commandError: MutableStateFlow<String> = MutableStateFlow("")
+var showBootBackupErrorDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
+var showMountErrorDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
+var showQuickBootErrorDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
 var commandResult: CommandResult = CommandResult(true, mutableListOf(""), mutableListOf(""))
 val commandHandler: Commands = object : Commands() {}
@@ -100,6 +102,9 @@ var LineHeight: TextUnit = 0.sp
 
 // App State
 val firstBoot: Boolean = prefs.getBoolean("firstboot", true)
+
+@SuppressLint("StaticFieldLeak")
+lateinit var M3KContext: Context
 
 @SuppressLint("RestrictedApi")
 fun vars() {
@@ -125,7 +130,6 @@ fun vars() {
         currentDeviceCommands.mountPath = "/sdcard"
 
         dynamicVars()
-        bootBackupStatus()
 
         if (BuildConfig.DEBUG) {
             debugLog()
@@ -204,11 +208,18 @@ private fun dynamicVars() {
     appScope.launch {
         commandHandler.withMountedWindows(ErrorType.MOUNT_ERROR) {
             WindowsIsPresent.value = when {
-                ShellUtils.fastCmd("find $SDCARD_PATH/Windows/explorer.exe")
+                ShellUtils.fastCmd("find ${SDCARD_PATH}/Windows/Windows/explorer.exe")
                     .isNotEmpty() -> string.yes
 
                 else -> string.no
             }
+            BootIsPresent.value =
+                when (checkBootImages(device.currentDeviceCard.noMount, SDCARD_PATH)) {
+                    3 -> string.backup_both
+                    2 -> string.backup_windows
+                    1 -> string.backup_android
+                    else -> string.no
+                }
         }
         if (device.uefiCards.isEmpty()) {
             val find = Shell.cmd("find /mnt/sdcard/UEFI/ -type f | grep .img").exec()
@@ -254,7 +265,7 @@ fun rememberDeviceStrings(): DeviceStrings {
                 M3KApp.getString(string.backup_boot_state, M3KApp.getString(BootIsPresent.value))
             } else null,
             slot = if (device.slot.isNotEmpty()) {
-                M3KApp.getString(string.slot, device.slot)
+                M3KApp.getString(string.slot, device.slot.drop(1).uppercase())
             } else null,
             windowsStatus = if (!device.currentDeviceCard.noMount) {
                 M3KApp.getString(string.windows_status, M3KApp.getString(WindowsIsPresent.value))

@@ -82,7 +82,7 @@ class QuickBootTile : CommonTileService() { // more than just a PoC
                 return
             }
 
-            else -> commandHandler.quickBoot(uefiPath!!)
+            else -> commandHandler.quickBoot(uefiPath ?: return)
         }
     }
 

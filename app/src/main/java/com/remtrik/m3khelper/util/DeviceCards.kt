@@ -114,7 +114,7 @@ val raphaelCard: DeviceCard = DeviceCard(
     "https://github.com/woa-raphael/woa-raphael/releases/tag/raphael-uefi",
     noModem = false, noFlash = false,
     noBoot = false, noMount = false,
-    sensors = true, noGuide = false,
+    sensors = false, noGuide = false,
     noGroup = false, noDrivers = false,
     noUEFI = false, unifiedDriversUEFI = false
 )

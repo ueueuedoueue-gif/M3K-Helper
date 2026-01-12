@@ -10,7 +10,7 @@ import java.io.File
 import java.util.Locale
 
 lateinit var M3KApp: M3KHelperApplication
-lateinit var GMNT_SHELL: Shell
+//lateinit var GMNT_SHELL: Shell
 //lateinit var SHELL: Shell
 
 lateinit var prefs: SharedPreferences
@@ -31,9 +31,11 @@ class M3KHelperApplication : Application() {
         Shell.setDefaultBuilder(
             Shell.Builder.create().setFlags(Shell.FLAG_REDIRECT_STDERR).setTimeout(10)
         )
-        GMNT_SHELL = Shell.Builder.create().build("su")
+        //GMNT_SHELL = Shell.Builder.create().build("su")
         //SHELL = Shell.Builder.create().build("su", "-mm")
-        if (Shell.isAppGrantedRoot() == true) vars()
+        Shell.getShell()
+        val isrooted = Shell.isAppGrantedRoot()
+        if (isrooted == true) vars()
         okhttpClient =
             OkHttpClient.Builder().cache(Cache(File(cacheDir, "okhttp"), 10 * 1024 * 1024))
                 .addInterceptor { block ->

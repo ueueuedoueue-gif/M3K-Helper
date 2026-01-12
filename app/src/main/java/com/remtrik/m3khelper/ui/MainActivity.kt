@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
@@ -76,6 +77,7 @@ import com.remtrik.m3khelper.util.slideToRightExitTransition
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
+import com.remtrik.m3khelper.util.variables.M3KContext
 import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.sdp
@@ -99,6 +101,7 @@ class MainActivity : ComponentActivity() {
             M3KHelperTheme {
                 InitDimens()
                 if (Shell.isAppGrantedRoot() == true) {
+                    M3KContext = LocalContext.current
                     M3KRootContent()
                 } else NoRoot()
             }
@@ -140,12 +143,13 @@ internal fun M3KRootContent() {
     Scaffold(
         bottomBar = {
             if (orientation != Configuration.ORIENTATION_LANDSCAPE) {
-                BottomNavigationBar(navController, navigator) }
+                BottomNavigationBar(navController, navigator)
+            }
         },
     ) { innerPadding ->
         Row {
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                LeftNavigationBar(navController, navigator, innerPadding)
+                LeftNavigationBar(navController, navigator)
             }
 
             Box(
@@ -265,7 +269,6 @@ private fun BottomNavigationBar(
 private fun LeftNavigationBar(
     navController: NavHostController,
     navigator: DestinationsNavigator,
-    innerPadding: PaddingValues
 ) {
     NavigationRail(
         modifier = Modifier.width(110.sdp()),

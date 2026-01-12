@@ -75,11 +75,11 @@ fun CommonTopAppBar(
         isNavigate?.let {
             Spacer(Modifier.weight(1f))
             IconButton(
-                onClick = { navigator.navigate(destination!!) },
+                onClick = { navigator.navigate(destination ?: return@IconButton) },
                 modifier = Modifier.size(40.sdp())
             ) {
                 Icon(
-                    imageVector = icon!!,
+                    imageVector = icon ?: return@IconButton,
                     contentDescription = "Navigate to ${destination?.label}",
                     modifier = Modifier.size(25.sdp())
                 )
