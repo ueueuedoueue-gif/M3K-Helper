@@ -19,7 +19,7 @@ import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -239,7 +239,7 @@ abstract class Commands {
             if (!manualReboot) {
                 RootCommandExecutor.exec("svc power reboot")
             } else {
-                GlobalScope.launch(Dispatchers.Main) {
+                MainScope().launch() {
                     Toast.makeText(
                         M3KApp,
                         R.string.manual_reboot_toast.string(),
@@ -251,7 +251,7 @@ abstract class Commands {
     }
 
     /**
-     * this gay shitter is used for backwards compatibility and is visible from outside
+     * Synchronous wrapper for withMountedWindowsSuspend, provided for backwards compatibility.
      */
     fun withMountedWindows(
         type: ErrorType,
