@@ -19,10 +19,6 @@ class M3KHelperApplication : Application() {
 
     lateinit var okhttpClient: OkHttpClient
 
-    init {
-        System.loadLibrary("variables")
-    }
-
     override fun onCreate() {
         super.onCreate()
         M3KApp = this

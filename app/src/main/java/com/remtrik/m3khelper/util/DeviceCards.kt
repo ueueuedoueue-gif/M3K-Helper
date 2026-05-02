@@ -326,7 +326,7 @@ val unknownCard: DeviceCard = DeviceCard(
     "",
     "",
     noModem = true, noFlash = true,
-    noBoot = true, noMount = false,
+    noBoot = true, noMount = true,
     sensors = false, noGuide = true,
     noGroup = true, noDrivers = true,
     noUEFI = true, unifiedDriversUEFI = false,

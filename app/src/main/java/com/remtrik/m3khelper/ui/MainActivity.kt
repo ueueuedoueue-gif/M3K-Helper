@@ -15,7 +15,6 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -77,12 +76,12 @@ import com.remtrik.m3khelper.util.slideToRightExitTransition
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
-import com.remtrik.m3khelper.util.variables.M3KContext
 import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.ssp
 import com.topjohnwu.superuser.Shell
+import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
 
@@ -93,24 +92,27 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         window.isNavigationBarContrastEnforced = false
 
-        requestedOrientation =
-            if (shouldForceRotation()) SCREEN_ORIENTATION_FULL_USER
-            else SCREEN_ORIENTATION_USER_PORTRAIT
+        requestedOrientation = resolveOrientation()
 
         setContent {
             M3KHelperTheme {
                 InitDimens()
                 if (Shell.isAppGrantedRoot() == true) {
-                    M3KContext = LocalContext.current
                     M3KRootContent()
-                } else NoRoot()
+                } else {
+                    NoRoot()
+                }
             }
         }
     }
 
-    private fun shouldForceRotation(): Boolean = Build.DEVICE == "nabu" ||
-            (BuildConfig.DEBUG && Build.DEVICE == "emu64xa") ||
-            prefs.getBoolean("force_rotation", false)
+    private fun resolveOrientation(): Int =
+        when {
+            Build.DEVICE == "nabu" -> SCREEN_ORIENTATION_FULL_USER
+            BuildConfig.DEBUG && Build.DEVICE == "emu64xa" -> SCREEN_ORIENTATION_FULL_USER
+            prefs.getBoolean("force_rotation", false) -> SCREEN_ORIENTATION_FULL_USER
+            else -> SCREEN_ORIENTATION_USER_PORTRAIT
+        }
 }
 
 @Composable
@@ -183,7 +185,7 @@ internal fun M3KRootContent() {
                             }
                     }
                 )
-                if (showWarningCard.value) {
+                if (showWarningCard.collectAsState().value) {
                     UnknownDevice()
                 }
             }
@@ -205,53 +207,28 @@ private fun BottomNavigationBar(
 ) {
     NavigationBar(
         tonalElevation = 12.dp,
-        windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
-            .only(
-                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
-            ),
+        windowInsets = WindowInsets.systemBars
+            .union(WindowInsets.displayCutout)
+            .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
         modifier = Modifier.height(120.sdp()),
     ) {
         Destinations.entries
             .filterNot { it.landscapeOnly }
             .forEach { destination ->
-                if (device.currentDeviceCard.noLinks && destination.route == LinksScreenDestination) {
-                    return@forEach
-                }
+                if (device.currentDeviceCard.noLinks &&
+                    destination.route == LinksScreenDestination
+                ) return@forEach
+
                 val isCurrentDestOnBackStack by navController.isRouteOnBackStackAsState(
                     destination.route
                 )
                 NavigationBarItem(
                     selected = isCurrentDestOnBackStack,
                     onClick = {
-                        if (isCurrentDestOnBackStack) {
-                            navigator.popBackStack(destination.route, false)
-                        }
-                        navigator.navigate(destination.route) {
-                            popUpTo(NavGraphs.root) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        navigateTo(destination, isCurrentDestOnBackStack, navigator)
                     },
                     icon = {
-                        if (isCurrentDestOnBackStack) {
-                            Icon(
-                                imageVector = destination.iconSelected,
-                                contentDescription = stringResource(
-                                    destination.label
-                                ),
-                                modifier = Modifier.size(20.sdp())
-                            )
-                        } else {
-                            Icon(
-                                imageVector = destination.iconNotSelected,
-                                contentDescription = stringResource(
-                                    destination.label
-                                ),
-                                modifier = Modifier.size(20.sdp())
-                            )
-                        }
+                        NavigationIcon(destination, isCurrentDestOnBackStack)
                     },
                     label = {
                         Text(
@@ -272,7 +249,8 @@ private fun LeftNavigationBar(
 ) {
     NavigationRail(
         modifier = Modifier.width(110.sdp()),
-        windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom + WindowInsetsSides.Top)
+        windowInsets = WindowInsets.systemBars
+            .only(WindowInsetsSides.Bottom + WindowInsetsSides.Top)
     ) {
         Destinations.entries.forEach { destination ->
             if (device.currentDeviceCard.noLinks && destination.route == LinksScreenDestination) return@forEach
@@ -287,35 +265,10 @@ private fun LeftNavigationBar(
             NavigationRailItem(
                 selected = isCurrentDestOnBackStack,
                 onClick = {
-                    if (isCurrentDestOnBackStack) {
-                        navigator.popBackStack(destination.route, false)
-                    }
-                    navigator.navigate(destination.route) {
-                        popUpTo(NavGraphs.root) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    navigateTo(destination, isCurrentDestOnBackStack, navigator)
                 },
                 icon = {
-                    if (isCurrentDestOnBackStack) {
-                        Icon(
-                            imageVector = destination.iconSelected,
-                            contentDescription = stringResource(
-                                destination.label
-                            ),
-                            modifier = Modifier.size(20.sdp())
-                        )
-                    } else {
-                        Icon(
-                            imageVector = destination.iconNotSelected,
-                            contentDescription = stringResource(
-                                destination.label
-                            ),
-                            modifier = Modifier.size(20.sdp())
-                        )
-                    }
+                    NavigationIcon(destination, isCurrentDestOnBackStack)
                 },
                 label = {
                     Text(
@@ -326,5 +279,31 @@ private fun LeftNavigationBar(
                 alwaysShowLabel = false
             )
         }
+    }
+}
+
+@Composable
+private fun NavigationIcon(destination: Destinations, selected: Boolean) {
+    val icon = if (selected) destination.iconSelected else destination.iconNotSelected
+
+    Icon(
+        imageVector = icon,
+        contentDescription = stringResource(destination.label),
+        modifier = Modifier.size(20.sdp())
+    )
+}
+
+private fun navigateTo(
+    destination: Destinations,
+    isSelected: Boolean,
+    navigator: DestinationsNavigator
+) {
+    if (isSelected) {
+        navigator.popBackStack(destination.route, false)
+    }
+    navigator.navigate(destination.route) {
+        popUpTo(NavGraphs.root) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }

@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons.Filled
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -37,6 +37,7 @@ import com.remtrik.m3khelper.ui.component.InfoCard
 import com.remtrik.m3khelper.ui.component.MountButton
 import com.remtrik.m3khelper.ui.component.QuickBootButton
 import com.remtrik.m3khelper.ui.component.CommonTopAppBar
+import com.remtrik.m3khelper.ui.viewmodel.DeviceViewModel
 import com.remtrik.m3khelper.util.DeviceCard
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.PaddingValue
@@ -57,7 +58,7 @@ fun HomeScreen(navigator: DestinationsNavigator) {
     val spacing = 10.sdp()
     val padding = remember { PaddingValue }
 
-    val deviceCard by derivedStateOf { device.currentDeviceCard }
+    val deviceCard by remember { derivedStateOf { device.currentDeviceCard } }
 
     val bootError by remember { derivedStateOf { showBootBackupErrorDialog.value } }
     val mountError by remember { derivedStateOf { showMountErrorDialog.value } }
@@ -71,20 +72,17 @@ fun HomeScreen(navigator: DestinationsNavigator) {
                 text = R.string.app_name,
                 isNavigate = if (isLandscape) null else true,
                 destination = SettingsScreenDestination,
-                icon = Filled.Settings,
+                icon = Icons.Filled.Settings,
             )
         },
     ) { innerPadding ->
         Column(
-            verticalArrangement = Arrangement.spacedBy(spacing),
             modifier = Modifier
-                .verticalScroll(scrollState)
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                    start = padding,
-                    end = padding
-                )
                 .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(scrollState)
+                .padding(horizontal = padding),
+            verticalArrangement = Arrangement.spacedBy(spacing)
         ) {
             if (isLandscape) {
                 Row(
@@ -135,7 +133,7 @@ private fun Buttons(deviceCard: DeviceCard) {
 @Composable
 private fun DeviceInfo(modifier: Modifier) {
     DeviceImage(modifier)
-    InfoCard(modifier)
+    InfoCard(modifier, DeviceViewModel())
 }
 
 @Composable

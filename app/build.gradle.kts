@@ -1,49 +1,32 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.android.build.gradle.internal.api.BaseVariantOutputImpl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.agp.app)
-    alias(libs.plugins.kotlin)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.lsplugin.apksign)
     alias(libs.plugins.compose.compiler)
     id("kotlin-parcelize")
 }
 
 android {
     namespace = "com.remtrik.m3khelper"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.remtrik.m3khelper"
         minSdk = 29
         targetSdk = 36
-        versionCode = 66
-        versionName = "6.0.2-IFLXP"
-        compileSdk = 36
+        versionCode = 67
+        versionName = "6.1.0-TDWRR"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        externalNativeBuild {
-            cmake {
-                cppFlags += "-std=c++17"
-                arguments += listOf("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
-            }
-        }
-
-        splits {
-            abi {
-                isEnable = true
-                reset()
-                include("arm64-v8a", "x86_64")
-            }
-        }
     }
 
-    externalNativeBuild {
-        cmake { path = file("src/main/cpp/CMakeLists.txt") }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "x86_64")
+        }
     }
 
     buildTypes {
@@ -51,8 +34,6 @@ android {
             isShrinkResources = true
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            isDebuggable = false
-            isJniDebuggable = false
             vcsInfo.include = false
         }
     }
@@ -74,7 +55,14 @@ android {
     }
 
     lint {
-        disable += "MissingTranslation" + "TypographyFractions" + "TypographyEllipsis" + "IconLocation" + "IconDensities" + "ContentDescription"
+        disable += listOf(
+            "MissingTranslation",
+            "TypographyFractions",
+            "TypographyEllipsis",
+            "IconLocation",
+            "IconDensities",
+            "ContentDescription"
+        )
         abortOnError = false
         checkReleaseBuilds = false
     }
@@ -94,15 +82,11 @@ android {
         }
     }
 
-    applicationVariants.all {
-        outputs.forEach {
-            val output = it as BaseVariantOutputImpl
-            output.outputFileName =
-                "M3K_Helper_v${versionName}_${versionCode}-${name}-${output.getFilter(com.android.build.OutputFile.ABI)}.apk"
-        }
-        kotlin.sourceSets {
-            getByName(name) {
-                kotlin.srcDir("build/generated/ksp/$name/kotlin")
+    androidComponents {
+        onVariants { variant ->
+            variant.outputs.forEach { output ->
+                val abi = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
+                output.outputFileName.set("M3K_Helper_v${defaultConfig.versionName}_${defaultConfig.versionCode}-${variant.name}-${abi ?: "all"}.apk")
             }
         }
     }
@@ -148,5 +132,6 @@ dependencies {
 
     implementation(libs.m3color)
 
-    implementation(libs.okhttp3)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
 }

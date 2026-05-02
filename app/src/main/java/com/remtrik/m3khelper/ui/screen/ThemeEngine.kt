@@ -3,6 +3,7 @@ package com.remtrik.m3khelper.ui.screen
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -75,11 +77,16 @@ fun ThemeEngineScreen(navigator: DestinationsNavigator) {
             )
         }
     ) { innerPadding ->
-        ThemeEngineContent(
-            themeState = themeState,
-            scrollState = scrollState,
-            innerPadding = innerPadding
-        )
+        Column(
+            modifier = Modifier
+                .verticalScroll(scrollState)
+                .padding(top = innerPadding.calculateTopPadding())
+                .padding(horizontal = PaddingValue)
+                .fillMaxSize()
+        ) {
+            ThemeSwitchItems(themeState)
+            PaletteSelector(themeState)
+        }
     }
 }
 
@@ -140,24 +147,6 @@ private fun rememberThemeState(): ThemeState {
                 triggerThemeReapply()
             }
         )
-    }
-}
-
-@Composable
-private fun ThemeEngineContent(
-    themeState: ThemeState,
-    scrollState: androidx.compose.foundation.ScrollState,
-    innerPadding: PaddingValues
-) {
-    Column(
-        modifier = Modifier
-            .verticalScroll(scrollState)
-            .padding(top = innerPadding.calculateTopPadding())
-            .padding(horizontal = PaddingValue)
-            .fillMaxSize()
-    ) {
-        ThemeSwitchItems(themeState)
-        PaletteSelector(themeState)
     }
 }
 
@@ -238,7 +227,7 @@ private fun PaletteDropdown(
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = M3KApp.getString(
+                text = stringResource(
                     R.string.theme_engine_current_palette,
                     paletteStyle
                 ),

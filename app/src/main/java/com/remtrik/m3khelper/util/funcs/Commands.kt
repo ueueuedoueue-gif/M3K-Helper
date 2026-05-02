@@ -5,7 +5,7 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import com.remtrik.m3khelper.R
-import com.remtrik.m3khelper.util.variables.M3KContext
+import com.remtrik.m3khelper.M3KApp
 import com.remtrik.m3khelper.util.variables.commandHandler
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.SDCARD_PATH
@@ -165,12 +165,7 @@ abstract class Commands {
                     Shell.cmd("echo 'modem path not found'").exec()
             } else {
                 internalLastCommandResult =
-                    RootCommandExecutor.exec("dd if=/dev/block/bootdevice/by-name/modemst1 of=$path/bootmodem_fs1 bs=8388608")
-                // chain second dd only if first succeeded
-                if (internalLastCommandResult.isSuccess) {
-                    internalLastCommandResult =
-                        RootCommandExecutor.exec("dd if=/dev/block/bootdevice/by-name/modemst2 of=$path/bootmodem_fs2 bs=8388608")
-                }
+                    RootCommandExecutor.exec("dd if=/dev/block/bootdevice/by-name/modemst1 of=$path/bootmodem_fs1 bs=8388608 && dd if=/dev/block/bootdevice/by-name/modemst2 of=$path/bootmodem_fs2 bs=8388608")
             }
         }
         return toCommandResult(internalLastCommandResult)
@@ -246,7 +241,7 @@ abstract class Commands {
             } else {
                 GlobalScope.launch(Dispatchers.Main) {
                     Toast.makeText(
-                        M3KContext,
+                        M3KApp,
                         R.string.manual_reboot_toast.string(),
                         Toast.LENGTH_SHORT
                     ).show()

@@ -12,14 +12,15 @@ import com.remtrik.m3khelper.util.variables.sdp
 @Composable
 fun DeviceImage(modifier: Modifier) {
     Image(
-        alignment = Alignment.TopStart,
+        painter = painterResource(id = device.currentDeviceCard.deviceImage),
+        contentDescription = null,
         modifier = if (device.isSpecial.value) {
             modifier
         } else {
             Modifier
                 .height(210.sdp())
         },
-        painter = painterResource(id = device.currentDeviceCard.deviceImage),
-        contentDescription = null,
+        alignment = Alignment.Center,
+        contentScale = androidx.compose.ui.layout.ContentScale.Fit
     )
 }

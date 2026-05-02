@@ -71,26 +71,10 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
     val scrollState = rememberScrollState()
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    var checkUpdate by rememberSaveable {
-        mutableStateOf(
-            prefs.getBoolean("check_update", true)
-        )
-    }
-    var forceRotation by rememberSaveable {
-        mutableStateOf(
-            prefs.getBoolean("force_rotation", false)
-        )
-    }
-    var overrideDevice by rememberSaveable {
-        mutableStateOf(
-            prefs.getBoolean("override_device", false)
-        )
-    }
-    var overridenDeviceName by rememberSaveable {
-        mutableStateOf(
-            prefs.getString("overriden_device_name", "Poco X3 Pro")
-        )
-    }
+    var checkUpdate by rememberSaveable { mutableStateOf(prefs.getBoolean("check_update", true)) }
+    var forceRotation by rememberSaveable { mutableStateOf(prefs.getBoolean("force_rotation", false)) }
+    var overrideDevice by rememberSaveable { mutableStateOf(prefs.getBoolean("override_device", false)) }
+    var overridenDeviceName by rememberSaveable { mutableStateOf(prefs.getString("overriden_device_name", "Poco X3 Pro")) }
 
     var expanded by rememberSaveable { mutableStateOf(false) }
 
@@ -121,8 +105,8 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
                 summary = stringResource(R.string.autoupdate_summary),
                 checked = checkUpdate
             ) {
+                checkUpdate = it
                 scope.launch(Dispatchers.IO) {
-                    checkUpdate = it
                     prefs.edit { putBoolean("check_update", it) }
                 }
             }
@@ -132,8 +116,8 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
                 summary = stringResource(R.string.override_device_summary),
                 checked = overrideDevice
             ) {
+                overrideDevice = it
                 scope.launch(Dispatchers.IO) {
-                    overrideDevice = it
                     prefs.edit { putBoolean("override_device", it) }
                     fastLoadSavedDevice(it)
                 }
@@ -192,7 +176,8 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
                                         )
                                     },
                                     onClick = {
-                                        kotlinx.coroutines.runBlocking(Dispatchers.IO) {
+                                        expanded = false
+                                        scope.launch(Dispatchers.IO) {
                                             prefs.edit {
                                                 putString(
                                                     "overriden_device_codename",
@@ -204,7 +189,6 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
                                                 )
                                             }
                                             overridenDeviceName = it.deviceName
-                                            expanded = !expanded
 
                                             fastLoadSavedDevice(true)
                                         }
@@ -225,9 +209,11 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
                     summary = stringResource(R.string.force_rotation_summary),
                     checked = forceRotation
                 ) {
-                    kotlinx.coroutines.runBlocking(Dispatchers.IO) {
-                        prefs.edit { putBoolean("force_rotation", it) }
-                        forceRotation = it
+                    forceRotation = it
+                    scope.launch {
+                        launch(Dispatchers.IO) {
+                            prefs.edit { putBoolean("force_rotation", it) }
+                        }
                         if (it) M3KApp.resources.configuration.orientation =
                             Configuration.ORIENTATION_UNDEFINED
                         else Configuration.ORIENTATION_PORTRAIT

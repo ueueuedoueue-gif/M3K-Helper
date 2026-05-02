@@ -14,17 +14,6 @@ private data class WidthRatioConfig(
 )
 
 @Composable
-private fun rememberApproximatedWidth(): Int {
-    val config = LocalConfiguration.current
-    val smallestWidth = config.smallestScreenWidthDp
-    return remember(smallestWidth) { approximateWidth(smallestWidth) }
-}
-
-private fun approximateWidth(value: Int): Int {
-    return (value + 15) / 30 * 30
-}
-
-@Composable
 fun Int.sdp(): Dp {
     val ratio = rememberWidthRatio(sdpRatioConfigs)
     return (this * ratio).dp
@@ -38,9 +27,15 @@ fun Int.ssp(): TextUnit {
 
 @Composable
 private fun rememberWidthRatio(configs: List<WidthRatioConfig>): Double {
-    val approxWidth = rememberApproximatedWidth()
-    return remember(approxWidth) {
-        calculateRatio(approxWidth, configs)
+    val configuration = LocalConfiguration.current
+    val smallestWidth = configuration.smallestScreenWidthDp
+
+    return remember(smallestWidth) {
+        val approxWidth = (smallestWidth + 15) / 30 * 30
+        val matchingConfig = configs.find { approxWidth <= it.widthThreshold }
+            ?: configs.last()
+
+        approxWidth / matchingConfig.divisor
     }
 }
 

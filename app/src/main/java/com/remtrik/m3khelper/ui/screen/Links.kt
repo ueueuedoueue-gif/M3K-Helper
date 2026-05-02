@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -101,14 +102,10 @@ private fun LandscapeLinksLayout(
         horizontalArrangement = Arrangement.spacedBy(spacing),
         modifier = Modifier.fillMaxWidth()
     ) {
-        LinksColumn(
-            modifier = Modifier.width(500.sdp())
-        ) {
+        LinksColumn(modifier = Modifier.weight(1f)) {
             FilesLinks(deviceCard, uriHandler)
         }
-        LinksColumn(
-            modifier = Modifier.width(500.sdp())
-        ) {
+        LinksColumn(modifier = Modifier.weight(1f)) {
             SocialLinks(deviceCard, uriHandler)
         }
     }
@@ -127,15 +124,14 @@ private fun PortraitLinksLayout(
 private fun LinksColumn(
     modifier: Modifier = Modifier,
     verticalSpacing: Dp = 10.sdp(),
-    content: @Composable () -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(verticalSpacing),
-        modifier = modifier
-    ) {
-        content()
-    }
+        modifier = modifier,
+        content = content
+    )
 }
 
 @Composable

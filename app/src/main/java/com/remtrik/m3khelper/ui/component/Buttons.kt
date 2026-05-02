@@ -1,5 +1,6 @@
 package com.remtrik.m3khelper.ui.component
 
+import android.widget.Toast
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -37,18 +38,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.remtrik.m3khelper.R
 import com.remtrik.m3khelper.R.drawable.ic_backup
 import com.remtrik.m3khelper.R.drawable.ic_folder
 import com.remtrik.m3khelper.R.drawable.ic_folder_open
 import com.remtrik.m3khelper.R.drawable.ic_windows
 import com.remtrik.m3khelper.R.string
+import com.remtrik.m3khelper.ui.viewmodel.DeviceViewModel
 import com.remtrik.m3khelper.util.funcs.BootBackupState
 import com.remtrik.m3khelper.util.funcs.ErrorType
 import com.remtrik.m3khelper.util.funcs.MountStatus
+import com.remtrik.m3khelper.util.funcs.string
 import com.remtrik.m3khelper.util.variables.commandHandler
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
+import com.remtrik.m3khelper.M3KApp
 import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.commandError
 import com.remtrik.m3khelper.util.variables.commandResult
@@ -58,6 +63,7 @@ import com.remtrik.m3khelper.util.variables.showMountErrorDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.collectAsState
 
 // --Commented out by Inspection START (10/3/2025 9:21 PM):
 //@Composable
@@ -150,7 +156,17 @@ fun LinkButton(
     uriHandler: UriHandler
 ) {
     ElevatedCard(
-        onClick = { uriHandler.openUri(link) },
+        onClick = {
+            try {
+                uriHandler.openUri(link)
+            } catch (e: Exception) {
+                Toast.makeText(
+                    M3KApp,
+                    "No browser found to open link",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        },
         modifier = Modifier
             .height(105.sdp())
             .fillMaxWidth(),
@@ -262,6 +278,8 @@ fun BackupButton() {
                                             if (!commandResult.isSuccess) {
                                                 commandError.value = commandResult.output[0]
                                                 showBootBackupErrorDialog.value = true
+                                            } else {
+                                                DeviceViewModel().refreshStatus()
                                             }
                                             showSpinner.value = false
                                         }
@@ -471,7 +489,7 @@ fun QuickBootButton() {
     val showDialog = remember { mutableStateOf(false) }
     val showSpinner = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val hasUefi = device.uefiCards.isNotEmpty()
+    val hasUefi = device.uefiCards.collectAsState().value.isNotEmpty()
 
     ElevatedCard(
         onClick = { showDialog.value = true },
@@ -516,7 +534,7 @@ fun QuickBootButton() {
                             Modifier.align(Alignment.CenterHorizontally),
                             horizontalArrangement = Arrangement.spacedBy(10.sdp())
                         ) {
-                            device.uefiCards.forEach {
+                            device.uefiCards.collectAsState().value.forEach {
                                 AssistChip(
                                     onClick = {
                                         scope.launch {
