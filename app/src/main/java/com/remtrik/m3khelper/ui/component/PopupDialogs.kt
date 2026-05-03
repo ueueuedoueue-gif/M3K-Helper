@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,8 +30,8 @@ import com.remtrik.m3khelper.util.funcs.LatestVersionInfo
 import com.remtrik.m3khelper.util.funcs.restart
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
-import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.sdp
+import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.ssp
 
 @Composable
@@ -80,7 +79,7 @@ fun ErrorDialog(
                     label = {
                         Text(
                             modifier = Modifier.padding(top = 2.sdp(), bottom = 2.sdp()),
-                            text = LocalContext.current.getString(R.string.yes),
+                            text = stringResource(R.string.yes),
                             fontSize = FontSize
                         )
                     }
@@ -193,7 +192,7 @@ fun Dialog(
                     label = {
                         Text(
                             modifier = Modifier.padding(top = 2.sdp(), bottom = 2.sdp()),
-                            text = LocalContext.current.getString(R.string.yes),
+                            text = stringResource(R.string.yes),
                             fontSize = FontSize
                         )
                     }
@@ -205,7 +204,7 @@ fun Dialog(
                     label = {
                         Text(
                             modifier = Modifier.padding(top = 2.sdp(), bottom = 2.sdp()),
-                            text = LocalContext.current.getString(R.string.no),
+                            text = stringResource(R.string.no),
                             fontSize = FontSize
                         )
                     }
@@ -276,7 +275,7 @@ fun StatusDialog(
             },
             title = {
                 Text(
-                    text = LocalContext.current.getString(title),
+                    text = stringResource(title),
                     textAlign = TextAlign.Center,
                     fontSize = FontSize,
                     lineHeight = LineHeight

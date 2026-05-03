@@ -11,8 +11,18 @@ import com.remtrik.m3khelper.util.funcs.string
 import com.remtrik.m3khelper.util.variables.commandHandler
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.firstBoot
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 abstract class CommonTileService : TileService() {
+    protected val serviceScope = CoroutineScope(Dispatchers.Main + Job())
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
+
     protected fun disableTile(subtitleString: Int?) {
         qsTile.apply {
             state = STATE_UNAVAILABLE
@@ -32,7 +42,7 @@ abstract class CommonTileService : TileService() {
 
 class MountTile : CommonTileService() { // more than just a PoC
     private val supported: Boolean
-        get() = !firstBoot && !device.savedDeviceCard.noMount
+        get() = !firstBoot && !device.savedDeviceCard.value.noMount
 
     override fun onStartListening() {
         super.onStartListening()
@@ -41,25 +51,34 @@ class MountTile : CommonTileService() { // more than just a PoC
             return
         }
 
-        if (commandHandler.isMounted() == MountStatus.NOT_MOUNTED) {
-            enableTile(R.string.mnt_question)
-        } else {
-            enableTile(R.string.umnt_question)
+        serviceScope.launch {
+            if (commandHandler.isMounted() == MountStatus.NOT_MOUNTED) {
+                enableTile(R.string.mnt_question)
+            } else {
+                enableTile(R.string.umnt_question)
+            }
+            qsTile.updateTile()
         }
     }
 
     override fun onClick() {
         super.onClick()
 
-        if (commandHandler.isMounted() == MountStatus.NOT_MOUNTED) commandHandler.mountWindows() else commandHandler.umountWindows()
-        onStartListening()
+        serviceScope.launch {
+            if (commandHandler.isMounted() == MountStatus.NOT_MOUNTED) {
+                commandHandler.mountWindows()
+            } else {
+                commandHandler.umountWindows()
+            }
+            onStartListening()
+        }
     }
 
 }
 
 class QuickBootTile : CommonTileService() { // more than just a PoC
     private val supported: Boolean
-        get() = !firstBoot && !device.savedDeviceCard.noFlash
+        get() = !firstBoot && !device.savedDeviceCard.value.noFlash
 
     private val uefiPath: String?
         get() = device.uefiCards.value.firstOrNull()?.uefiPath
@@ -82,7 +101,9 @@ class QuickBootTile : CommonTileService() { // more than just a PoC
                 return
             }
 
-            else -> commandHandler.quickBoot(uefiPath ?: return)
+            else -> serviceScope.launch {
+                commandHandler.quickBoot(uefiPath ?: return@launch)
+            }
         }
     }
 

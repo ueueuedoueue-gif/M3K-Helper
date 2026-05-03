@@ -36,7 +36,7 @@
     <string name="paneltype">"Panel: %1s"</string>
     <string name="unknown_panel">Unknown</string>
     <string name="slot">"Slot: %1s"</string>
-    <string name="backup_boot_state">"Boot backed up: %s"</string>
+    <string name="backup_boot_state">"Boot backup: %s"</string>
     <string name="windows_status">"Windows installed: %1s"</string>
 
 

@@ -3,6 +3,8 @@ package com.remtrik.m3khelper.ui.component
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -11,10 +13,13 @@ import com.remtrik.m3khelper.util.variables.sdp
 
 @Composable
 fun DeviceImage(modifier: Modifier) {
+    val currentDeviceCard by device.currentDeviceCard.collectAsState()
+    val isSpecial by device.isSpecial.collectAsState()
+
     Image(
-        painter = painterResource(id = device.currentDeviceCard.deviceImage),
+        painter = painterResource(id = currentDeviceCard.deviceImage),
         contentDescription = null,
-        modifier = if (device.isSpecial.value) {
+        modifier = if (isSpecial) {
             modifier
         } else {
             Modifier

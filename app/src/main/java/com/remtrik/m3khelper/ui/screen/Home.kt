@@ -1,7 +1,5 @@
 package com.remtrik.m3khelper.ui.screen
 
-import android.R.attr.maxWidth
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,52 +16,48 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.SettingsScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.remtrik.m3khelper.R
 import com.remtrik.m3khelper.ui.component.BackupButton
+import com.remtrik.m3khelper.ui.component.CommonTopAppBar
 import com.remtrik.m3khelper.ui.component.DeviceImage
 import com.remtrik.m3khelper.ui.component.ErrorDialog
 import com.remtrik.m3khelper.ui.component.InfoCard
 import com.remtrik.m3khelper.ui.component.MountButton
 import com.remtrik.m3khelper.ui.component.QuickBootButton
-import com.remtrik.m3khelper.ui.component.CommonTopAppBar
 import com.remtrik.m3khelper.ui.viewmodel.DeviceViewModel
 import com.remtrik.m3khelper.util.DeviceCard
-import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.commandError
+import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.showBootBackupErrorDialog
 import com.remtrik.m3khelper.util.variables.showMountErrorDialog
 import com.remtrik.m3khelper.util.variables.showQuickBootErrorDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UnrememberedMutableState")
 @Destination<RootGraph>(start = true)
 @Composable
 fun HomeScreen(navigator: DestinationsNavigator) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val scrollState = rememberScrollState()
 
-    val spacing = 10.sdp()
-    val padding = remember { PaddingValue }
+    val deviceCard by device.currentDeviceCard.collectAsStateWithLifecycle()
 
-    val deviceCard by remember { derivedStateOf { device.currentDeviceCard } }
-
-    val bootError by remember { derivedStateOf { showBootBackupErrorDialog.value } }
-    val mountError by remember { derivedStateOf { showMountErrorDialog.value } }
-    val quickBootError by remember { derivedStateOf { showQuickBootErrorDialog.value } }
-    val commandErrorText by remember { derivedStateOf { commandError.value } }
+    val bootError by showBootBackupErrorDialog.collectAsStateWithLifecycle()
+    val mountError by showMountErrorDialog.collectAsStateWithLifecycle()
+    val quickBootError by showQuickBootErrorDialog.collectAsStateWithLifecycle()
+    val commandErrorText by commandError.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -81,17 +75,17 @@ fun HomeScreen(navigator: DestinationsNavigator) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(scrollState)
-                .padding(horizontal = padding),
-            verticalArrangement = Arrangement.spacedBy(spacing)
+                .padding(horizontal = PaddingValue),
+            verticalArrangement = Arrangement.spacedBy(PaddingValue)
         ) {
             if (isLandscape) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(spacing),
+                    horizontalArrangement = Arrangement.spacedBy(PaddingValue),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(spacing),
+                        verticalArrangement = Arrangement.spacedBy(PaddingValue),
                         modifier = Modifier.width(300.sdp())
                     ) {
                         DeviceInfo(
@@ -104,7 +98,7 @@ fun HomeScreen(navigator: DestinationsNavigator) {
                 }
             } else {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.sdp())
+                    horizontalArrangement = Arrangement.spacedBy(PaddingValue)
                 ) {
                     DeviceInfo(Modifier.height(416.sdp()))
                 }
@@ -132,8 +126,9 @@ private fun Buttons(deviceCard: DeviceCard) {
 
 @Composable
 private fun DeviceInfo(modifier: Modifier) {
+    val viewModel: DeviceViewModel = viewModel()
     DeviceImage(modifier)
-    InfoCard(modifier, DeviceViewModel())
+    InfoCard(modifier, viewModel)
 }
 
 @Composable

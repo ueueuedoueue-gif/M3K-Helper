@@ -10,12 +10,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import com.remtrik.m3khelper.M3KApp
-import com.remtrik.m3khelper.prefs
+import com.remtrik.m3khelper.util.variables.AppSettings
 
 private val DarkColorScheme = darkColorScheme(
     primary = m3k_theme_dark_primary,
@@ -37,58 +38,44 @@ private val LightColorScheme = lightColorScheme(
     onSecondaryContainer = m3k_theme_light_onSecondaryContainer
 )
 
-private data class ThemeSettings(
-    val red: Float,
-    val green: Float,
-    val blue: Float,
-    val enableThemeEngine: Boolean,
-    val enableMaterialU: Boolean,
-    val style: PaletteStyle
-)
-
-val themeReapply: MutableState<Boolean> = mutableStateOf(false)
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun M3KHelperTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val themeSettings = remember(themeReapply.value) {
-        ThemeSettings(
-            red = prefs.getFloat("theme_engine_color_R", 0f).coerceIn(0f, 1f),
-            green = prefs.getFloat("theme_engine_color_G", 0f).coerceIn(0f, 1f),
-            blue = prefs.getFloat("theme_engine_color_B", 0f).coerceIn(0f, 1f),
-            enableThemeEngine = prefs.getBoolean("theme_engine_enable", false),
-            enableMaterialU = prefs.getBoolean("theme_engine_enable_materialu", true),
-            style = runCatching {
-                PaletteStyle.valueOf(
-                    prefs.getString("theme_engine_palette_style", "TonalSpot").toString()
-                )
-            }.getOrDefault(PaletteStyle.TonalSpot)
-        )
+    val engineEnable by AppSettings.themeEngineEnable.collectAsState()
+    val materialUEnable by AppSettings.themeEngineEnableMaterialU.collectAsState()
+    val styleName by AppSettings.themeEnginePaletteStyle.collectAsState()
+    val r by AppSettings.themeEngineColorR.collectAsState()
+    val g by AppSettings.themeEngineColorG.collectAsState()
+    val b by AppSettings.themeEngineColorB.collectAsState()
+
+    val style = remember(styleName) {
+        runCatching { PaletteStyle.valueOf(styleName) }.getOrDefault(PaletteStyle.TonalSpot)
     }
-    val colorScheme = remember(darkTheme, themeSettings) {
-        when {
-            themeSettings.enableMaterialU
-                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                if (darkTheme) dynamicDarkColorScheme(M3KApp) else dynamicLightColorScheme(M3KApp)
+
+    val colorScheme by remember(darkTheme, engineEnable, materialUEnable, style, r, g, b) {
+        derivedStateOf {
+            when {
+                materialUEnable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                    if (darkTheme) dynamicDarkColorScheme(M3KApp) else dynamicLightColorScheme(M3KApp)
+                }
+
+                engineEnable -> {
+                    dynamicColorScheme(
+                        keyColor = Color(r, g, b),
+                        isDark = darkTheme,
+                        style = style
+                    )
+                }
+
+                darkTheme -> DarkColorScheme
+                else -> LightColorScheme
             }
-
-            themeSettings.enableThemeEngine ->
-                dynamicColorScheme(
-                    keyColor = Color(
-                        red = themeSettings.red,
-                        green = themeSettings.green,
-                        blue = themeSettings.blue
-                    ),
-                    isDark = darkTheme,
-                    style = themeSettings.style
-                )
-
-            else -> if (darkTheme) DarkColorScheme else LightColorScheme
         }
     }
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,

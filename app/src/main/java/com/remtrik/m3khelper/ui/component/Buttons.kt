@@ -23,6 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.remtrik.m3khelper.R
+import com.remtrik.m3khelper.M3KApp
 import com.remtrik.m3khelper.R.drawable.ic_backup
 import com.remtrik.m3khelper.R.drawable.ic_folder
 import com.remtrik.m3khelper.R.drawable.ic_folder_open
@@ -48,22 +50,16 @@ import com.remtrik.m3khelper.ui.viewmodel.DeviceViewModel
 import com.remtrik.m3khelper.util.funcs.BootBackupState
 import com.remtrik.m3khelper.util.funcs.ErrorType
 import com.remtrik.m3khelper.util.funcs.MountStatus
-import com.remtrik.m3khelper.util.funcs.string
-import com.remtrik.m3khelper.util.variables.commandHandler
-import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
-import com.remtrik.m3khelper.M3KApp
 import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.commandError
-import com.remtrik.m3khelper.util.variables.commandResult
+import com.remtrik.m3khelper.util.variables.commandHandler
+import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.showBootBackupErrorDialog
 import com.remtrik.m3khelper.util.variables.showMountErrorDialog
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import androidx.compose.runtime.collectAsState
 
 // --Commented out by Inspection START (10/3/2025 9:21 PM):
 //@Composable
@@ -148,6 +144,34 @@ import androidx.compose.runtime.collectAsState
 // --Commented out by Inspection STOP (10/3/2025 9:21 PM)
 
 @Composable
+fun IconItem(
+    icon: Any,
+    contentDescription: String? = null,
+    modifier: Modifier = Modifier,
+    tint: Color = MaterialTheme.colorScheme.primary
+) {
+    when (icon) {
+        is ImageVector -> {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = modifier,
+                tint = tint
+            )
+        }
+
+        is Int -> {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = contentDescription,
+                modifier = modifier,
+                tint = tint
+            )
+        }
+    }
+}
+
+@Composable
 fun LinkButton(
     title: String,
     subtitle: String?,
@@ -179,22 +203,7 @@ fun LinkButton(
             horizontalArrangement = Arrangement.spacedBy(5.sdp())
         ) {
             icon?.let {
-                if (icon is ImageVector) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(40.sdp()),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                } else if (icon is Int) {
-                    Icon(
-                        modifier = Modifier
-                            .size(40.sdp()),
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                IconItem(icon = it, modifier = Modifier.size(40.sdp()))
             }
             Column {
                 Text(
@@ -220,6 +229,7 @@ fun BackupButton() {
     val showDialog = remember { mutableStateOf(false) }
     val showSpinner = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val currentDeviceCard by device.currentDeviceCard.collectAsState()
 
     ElevatedCard(
         onClick = { showDialog.value = true },
@@ -267,22 +277,20 @@ fun BackupButton() {
                             AssistChip(
                                 onClick = {
                                     scope.launch {
-                                        withContext(Dispatchers.IO) {
-                                            showDialog.value = false
-                                            showSpinner.value = true
-                                            commandResult =
-                                                commandHandler.dumpBoot(
-                                                    ErrorType.QUICKBOOT_ERROR,
-                                                    BootBackupState.ANDROID
-                                                )
-                                            if (!commandResult.isSuccess) {
-                                                commandError.value = commandResult.output[0]
-                                                showBootBackupErrorDialog.value = true
-                                            } else {
-                                                DeviceViewModel().refreshStatus()
-                                            }
-                                            showSpinner.value = false
+                                        showDialog.value = false
+                                        showSpinner.value = true
+                                        val result =
+                                            commandHandler.dumpBoot(
+                                                ErrorType.QUICKBOOT_ERROR,
+                                                BootBackupState.ANDROID
+                                            )
+                                        if (!result.isSuccess) {
+                                            commandError.value = result.output[0]
+                                            showBootBackupErrorDialog.value = true
+                                        } else {
+                                            DeviceViewModel().refreshStatus()
                                         }
+                                        showSpinner.value = false
                                     }
                                 },
                                 label = {
@@ -297,24 +305,22 @@ fun BackupButton() {
                                 }
                             )
                             when {
-                                !device.currentDeviceCard.noMount -> {
+                                !currentDeviceCard.noMount -> {
                                     AssistChip(
                                         onClick = {
                                             scope.launch {
-                                                withContext(Dispatchers.IO) {
-                                                    showDialog.value = false
-                                                    showSpinner.value = true
-                                                    commandResult =
-                                                        commandHandler.dumpBoot(
-                                                            ErrorType.BOOTBACKUP_ERROR,
-                                                            BootBackupState.WINDOWS
-                                                        )
-                                                    if (!commandResult.isSuccess) {
-                                                        commandError.value = commandResult.output[0]
-                                                        showBootBackupErrorDialog.value = true
-                                                    }
-                                                    showSpinner.value = false
+                                                showDialog.value = false
+                                                showSpinner.value = true
+                                                val result =
+                                                    commandHandler.dumpBoot(
+                                                        ErrorType.BOOTBACKUP_ERROR,
+                                                        BootBackupState.WINDOWS
+                                                    )
+                                                if (!result.isSuccess) {
+                                                    commandError.value = result.output[0]
+                                                    showBootBackupErrorDialog.value = true
                                                 }
+                                                showSpinner.value = false
                                             }
                                         },
                                         label = {
@@ -357,13 +363,7 @@ fun BackupButton() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(5.sdp())
         ) {
-            Icon(
-                modifier = Modifier
-                    .size(40.sdp()),
-                painter = painterResource(id = ic_backup),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
+            IconItem(icon = ic_backup, modifier = Modifier.size(40.sdp()))
             Column {
                 Text(
                     stringResource(string.backup_boot_title),
@@ -384,7 +384,11 @@ fun BackupButton() {
 @Composable
 fun MountButton() {
     val showDialog = remember { mutableStateOf(false) }
-    var isMounted by remember(commandHandler.isMounted()) { mutableStateOf(commandHandler.isMounted()) }
+    var isMounted by remember { mutableStateOf(MountStatus.NOT_MOUNTED) }
+
+    LaunchedEffect(Unit) {
+        isMounted = commandHandler.isMounted()
+    }
 
     val scope = rememberCoroutineScope()
 
@@ -405,15 +409,13 @@ fun MountButton() {
                         onDismiss = { showDialog.value = false; },
                         onConfirm = {
                             scope.launch {
-                                withContext(Dispatchers.IO) {
-                                    commandResult = commandHandler.umountWindows()
-                                    if (!commandResult.isSuccess) {
-                                        commandError.value = commandResult.output[0]
-                                        showMountErrorDialog.value = true
-                                    }
-                                    showDialog.value = false
-                                    isMounted = commandHandler.isMounted()
+                                val result = commandHandler.umountWindows()
+                                if (!result.isSuccess) {
+                                    commandError.value = result.output[0]
+                                    showMountErrorDialog.value = true
                                 }
+                                showDialog.value = false
+                                isMounted = commandHandler.isMounted()
                             }
                         }
                     )
@@ -426,15 +428,13 @@ fun MountButton() {
                         onDismiss = { showDialog.value = false },
                         onConfirm = {
                             scope.launch {
-                                withContext(Dispatchers.IO) {
-                                    commandResult = commandHandler.mountWindows()
-                                    if (!commandResult.isSuccess) {
-                                        commandError.value = commandResult.output[0]
-                                        showMountErrorDialog.value = true
-                                    }
-                                    showDialog.value = false
-                                    isMounted = commandHandler.isMounted()
+                                val result = commandHandler.mountWindows()
+                                if (!result.isSuccess) {
+                                    commandError.value = result.output[0]
+                                    showMountErrorDialog.value = true
                                 }
+                                showDialog.value = false
+                                isMounted = commandHandler.isMounted()
                             }
                         }
                     )
@@ -448,18 +448,9 @@ fun MountButton() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(5.sdp())
         ) {
-            Icon(
-                modifier = Modifier
-                    .size(40.sdp()),
-                painter = painterResource(
-                    id = if (isMounted == MountStatus.MOUNTED) {
-                        ic_folder
-                    } else {
-                        ic_folder_open
-                    }
-                ),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+            IconItem(
+                icon = if (isMounted == MountStatus.MOUNTED) ic_folder else ic_folder_open,
+                modifier = Modifier.size(40.sdp())
             )
             Column {
                 val mounted: Int =
@@ -490,6 +481,7 @@ fun QuickBootButton() {
     val showSpinner = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val hasUefi = device.uefiCards.collectAsState().value.isNotEmpty()
+    val currentDeviceCard by device.currentDeviceCard.collectAsState()
 
     ElevatedCard(
         onClick = { showDialog.value = true },
@@ -538,14 +530,12 @@ fun QuickBootButton() {
                                 AssistChip(
                                     onClick = {
                                         scope.launch {
-                                            withContext(Dispatchers.IO) {
-                                                showDialog.value = false
-                                                showSpinner.value = true
-                                                commandHandler.quickBoot(
-                                                    it.uefiPath
-                                                )
-                                                showSpinner.value = false
-                                            }
+                                            showDialog.value = false
+                                            showSpinner.value = true
+                                            commandHandler.quickBoot(
+                                                it.uefiPath
+                                            )
+                                            showSpinner.value = false
                                         }
                                     },
                                     label = {
@@ -594,19 +584,13 @@ fun QuickBootButton() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(5.sdp())
         ) {
-            Icon(
-                modifier = Modifier
-                    .size(40.sdp()),
-                painter = painterResource(id = ic_windows),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
+            IconItem(icon = ic_windows, modifier = Modifier.size(40.sdp()))
             Column {
                 val title: Int
                 val subtitle: Int
                 if (hasUefi) {
                     title = string.quickboot_title
-                    subtitle = when (device.currentDeviceCard.noModem) {
+                    subtitle = when (currentDeviceCard.noModem) {
                         true -> string.quickboot_subtitle_nomodem
                         else -> string.quickboot_subtitle
                     }
@@ -660,25 +644,12 @@ fun SwitchItem(
             horizontalArrangement = Arrangement.spacedBy(5.sdp())
         ) {
             Column(Modifier.padding(end = 10.sdp())) {
-                if (icon is ImageVector) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(25.sdp())
-                            .align(Alignment.CenterHorizontally),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                } else if (icon is Int) {
-                    Icon(
-                        modifier = Modifier
-                            .size(25.sdp())
-                            .align(Alignment.CenterHorizontally),
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                IconItem(
+                    icon = icon,
+                    modifier = Modifier
+                        .size(25.sdp())
+                        .align(Alignment.CenterHorizontally)
+                )
             }
             Column(
                 Modifier
@@ -686,10 +657,21 @@ fun SwitchItem(
                     .fillMaxWidth()
             ) {
                 title?.let {
-                    Text(text = title, fontSize = FontSize, lineHeight = LineHeight)
+                    Text(
+                        text = title,
+                        fontSize = FontSize,
+                        lineHeight = LineHeight,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
                 summary?.let {
-                    Text(text = summary, fontSize = FontSize, lineHeight = LineHeight)
+                    Text(
+                        text = summary,
+                        fontSize = FontSize,
+                        lineHeight = LineHeight,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             Column {
@@ -723,25 +705,12 @@ fun ButtonItem(
             horizontalArrangement = Arrangement.spacedBy(5.sdp())
         ) {
             Column(Modifier.padding(end = 10.sdp())) {
-                if (icon is ImageVector) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(25.sdp())
-                            .align(Alignment.CenterHorizontally),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                } else if (icon is Int) {
-                    Icon(
-                        modifier = Modifier
-                            .size(25.sdp())
-                            .align(Alignment.CenterHorizontally),
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                IconItem(
+                    icon = icon,
+                    modifier = Modifier
+                        .size(25.sdp())
+                        .align(Alignment.CenterHorizontally)
+                )
             }
             Column(
                 Modifier
@@ -749,10 +718,21 @@ fun ButtonItem(
                     .fillMaxWidth()
             ) {
                 title?.let {
-                    Text(text = title, fontSize = FontSize, lineHeight = LineHeight)
+                    Text(
+                        text = title,
+                        fontSize = FontSize,
+                        lineHeight = LineHeight,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
                 summary?.let {
-                    Text(text = summary, fontSize = FontSize, lineHeight = LineHeight)
+                    Text(
+                        text = summary,
+                        fontSize = FontSize,
+                        lineHeight = LineHeight,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

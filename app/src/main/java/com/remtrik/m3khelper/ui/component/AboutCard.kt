@@ -34,6 +34,9 @@ import com.remtrik.m3khelper.util.variables.LineHeight
 import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.showAboutCard
 
+/**
+ * About card found in settings
+ */
 @Composable
 fun AboutCard() {
     Dialog(onDismissRequest = { showAboutCard.value = false }) {

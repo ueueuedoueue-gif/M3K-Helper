@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -20,7 +19,8 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -32,11 +32,11 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.remtrik.m3khelper.R
-import com.remtrik.m3khelper.ui.component.LinkButton
 import com.remtrik.m3khelper.ui.component.CommonTopAppBar
+import com.remtrik.m3khelper.ui.component.LinkButton
 import com.remtrik.m3khelper.util.DeviceCard
-import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.PaddingValue
+import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,7 +70,7 @@ private fun LinksContent(
     innerPadding: PaddingValues
 ) {
     val spacing = 10.sdp()
-    val deviceCard = remember { device.currentDeviceCard }
+    val deviceCard by device.currentDeviceCard.collectAsState()
     val uriHandler = LocalUriHandler.current
 
     Column(

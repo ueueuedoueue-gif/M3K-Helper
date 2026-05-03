@@ -13,6 +13,10 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
@@ -38,13 +42,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
@@ -55,6 +59,7 @@ import com.ramcosta.composedestinations.animations.NavHostAnimatedDestinationSty
 import com.ramcosta.composedestinations.generated.NavGraphs
 import com.ramcosta.composedestinations.generated.destinations.LinksScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.SettingsScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.ThemeEngineScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.utils.isRouteOnBackStackAsState
 import com.ramcosta.composedestinations.utils.rememberDestinationsNavigator
@@ -73,15 +78,14 @@ import com.remtrik.m3khelper.util.funcs.LatestVersionInfo
 import com.remtrik.m3khelper.util.slideFromRightEnterTransition
 import com.remtrik.m3khelper.util.slideToLeftExitTransition
 import com.remtrik.m3khelper.util.slideToRightExitTransition
-import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
 import com.remtrik.m3khelper.util.variables.PaddingValue
-import com.remtrik.m3khelper.util.variables.showWarningCard
+import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
+import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.ssp
 import com.topjohnwu.superuser.Shell
-import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
 
@@ -106,13 +110,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun resolveOrientation(): Int =
-        when {
-            Build.DEVICE == "nabu" -> SCREEN_ORIENTATION_FULL_USER
-            BuildConfig.DEBUG && Build.DEVICE == "emu64xa" -> SCREEN_ORIENTATION_FULL_USER
-            prefs.getBoolean("force_rotation", false) -> SCREEN_ORIENTATION_FULL_USER
-            else -> SCREEN_ORIENTATION_USER_PORTRAIT
+    private fun resolveOrientation(): Int {
+        val forceRotation = prefs.getBoolean("force_rotation", false)
+        val isNabu = Build.DEVICE == "nabu"
+        val isDebugEmulator = BuildConfig.DEBUG && Build.DEVICE == "emu64xa"
+
+        return if (isNabu || isDebugEmulator || forceRotation) {
+            SCREEN_ORIENTATION_FULL_USER
+        } else {
+            SCREEN_ORIENTATION_USER_PORTRAIT
         }
+    }
 }
 
 @Composable
@@ -144,13 +152,21 @@ internal fun M3KRootContent() {
 
     Scaffold(
         bottomBar = {
-            if (orientation != Configuration.ORIENTATION_LANDSCAPE) {
+            AnimatedVisibility(
+                visible = orientation != Configuration.ORIENTATION_LANDSCAPE,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it }
+            ) {
                 BottomNavigationBar(navController, navigator)
             }
         },
     ) { innerPadding ->
         Row {
-            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            AnimatedVisibility(
+                visible = orientation == Configuration.ORIENTATION_LANDSCAPE,
+                enter = slideInHorizontally { -it },
+                exit = slideOutHorizontally { -it }
+            ) {
                 LeftNavigationBar(navController, navigator)
             }
 
@@ -175,17 +191,16 @@ internal fun M3KRootContent() {
                                 AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition =
                             {
                                 if (targetState.destination.route !in bottomBarRoutes)
-                                    if (targetState.destination.route in listOf(
-                                            "settings_screen",
-                                            "theme_engine_screen"
-                                        )
+                                    if (targetState.destination.route == SettingsScreenDestination.route ||
+                                        targetState.destination.route == ThemeEngineScreenDestination.route
                                     ) slideToLeftExitTransition
                                     else slideToRightExitTransition
                                 else fadeExitTransition
                             }
                     }
                 )
-                if (showWarningCard.collectAsState().value) {
+                val isWarningVisible by showWarningCard.collectAsState()
+                if (isWarningVisible) {
                     UnknownDevice()
                 }
             }
@@ -196,6 +211,16 @@ internal fun M3KRootContent() {
             ) {
                 UpdateDialog(latestVersion)
             }
+        }
+    }
+}
+
+@Composable
+private fun getVisibleDestinations(): List<Destinations> {
+    val currentDeviceCard by device.currentDeviceCard.collectAsState()
+    return remember(currentDeviceCard) {
+        Destinations.entries.filter { destination ->
+            !(currentDeviceCard.noLinks && destination.route == LinksScreenDestination)
         }
     }
 }
@@ -212,13 +237,9 @@ private fun BottomNavigationBar(
             .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
         modifier = Modifier.height(120.sdp()),
     ) {
-        Destinations.entries
+        getVisibleDestinations()
             .filterNot { it.landscapeOnly }
             .forEach { destination ->
-                if (device.currentDeviceCard.noLinks &&
-                    destination.route == LinksScreenDestination
-                ) return@forEach
-
                 val isCurrentDestOnBackStack by navController.isRouteOnBackStackAsState(
                     destination.route
                 )
@@ -252,8 +273,7 @@ private fun LeftNavigationBar(
         windowInsets = WindowInsets.systemBars
             .only(WindowInsetsSides.Bottom + WindowInsetsSides.Top)
     ) {
-        Destinations.entries.forEach { destination ->
-            if (device.currentDeviceCard.noLinks && destination.route == LinksScreenDestination) return@forEach
+        getVisibleDestinations().forEach { destination ->
             if (destination.route == SettingsScreenDestination) Spacer(
                 Modifier.weight(
                     1f

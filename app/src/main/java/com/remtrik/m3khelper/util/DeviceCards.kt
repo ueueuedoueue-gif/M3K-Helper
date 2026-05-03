@@ -80,7 +80,7 @@ val vayuCard: DeviceCard = DeviceCard(
     drawable.vayu,
     "https://github.com/WaLoVayu/POCOX3Pro-Windows-Guides",
     "https://t.me/WaLoVayu",
-    "https://github.com/WaLoVayu/POCOX3Pro-Windows-Releases/releases/latest",
+    "https://github.com/remtrik-stuff/POCOX3Pro-Windows-Releases/releases/latest",
     "",
     noModem = true, noFlash = false,
     noBoot = false, noMount = false,
@@ -95,13 +95,13 @@ val nabuCard: DeviceCard = DeviceCard(
     drawable.nabu,
     "https://github.com/erdilS/Port-Windows-11-Xiaomi-Pad-5",
     "https://t.me/nabuwoa",
-    "https://github.com/erdilS/Port-Windows-11-Xiaomi-Pad-5/releases/tag/Drivers",
-    "https://github.com/erdilS/Port-Windows-11-Xiaomi-Pad-5/releases/tag/UEFI",
+    "https://github.com/remtrik-stuff/MiPad5-Windows-Releases/releases/latest",
+    "",
     noModem = true, noFlash = false,
     noBoot = false, noMount = false,
     sensors = false, noGuide = false,
     noGroup = false, noDrivers = false,
-    noUEFI = false, unifiedDriversUEFI = false
+    noUEFI = false, unifiedDriversUEFI = true
 )
 
 val raphaelCard: DeviceCard = DeviceCard(

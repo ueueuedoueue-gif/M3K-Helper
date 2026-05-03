@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -22,10 +23,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.remtrik.m3khelper.R.string
 import com.remtrik.m3khelper.ui.viewmodel.DeviceViewModel
 import com.remtrik.m3khelper.util.funcs.string
-import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
 import com.remtrik.m3khelper.util.variables.PaddingValue
+import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 
 @Composable
@@ -38,7 +39,7 @@ fun InfoCard(
 
     ElevatedCard(
         modifier =
-            if (device.isSpecial.value && !isLandscape) {
+            if (device.isSpecial.collectAsState().value && !isLandscape) {
                 modifier
             } else {
                 Modifier

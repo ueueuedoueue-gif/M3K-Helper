@@ -1,5 +1,7 @@
 package com.remtrik.m3khelper.ui.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -16,55 +18,38 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.core.content.edit
-import com.remtrik.m3khelper.prefs
-import com.remtrik.m3khelper.ui.theme.themeReapply
+import com.remtrik.m3khelper.util.variables.AppSettings
 import com.remtrik.m3khelper.util.variables.FontSize
 import com.remtrik.m3khelper.util.variables.LineHeight
 import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.sdp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ColorPicker() {
-    val red = rememberSaveable {
-        mutableFloatStateOf(
-            prefs.getFloat("theme_engine_color_R", 0f)
-        )
-    }
-    val green = rememberSaveable {
-        mutableFloatStateOf(
-            prefs.getFloat("theme_engine_color_G", 0f)
-        )
-    }
-    val blue = rememberSaveable {
-        mutableFloatStateOf(
-            prefs.getFloat("theme_engine_color_B", 0f)
-        )
+    val red by AppSettings.themeEngineColorR.collectAsState()
+    val green by AppSettings.themeEngineColorG.collectAsState()
+    val blue by AppSettings.themeEngineColorB.collectAsState()
+
+    val targetColor = remember(red, green, blue) {
+        Color(red, green, blue, 1f)
     }
 
-    val color by remember(red.floatValue, green.floatValue, blue.floatValue) {
-        derivedStateOf {
-            Color(red.floatValue, green.floatValue, blue.floatValue, 1f)
-        }
-    }
+    val animatedColor by animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = tween(durationMillis = 300),
+        label = "ColorPreviewAnimation"
+    )
 
     Column {
-        ColorPreview(color)
+        ColorPreview(animatedColor)
         ColorSliders(red, green, blue)
     }
 }
@@ -75,49 +60,59 @@ private fun ColorPreview(color: Color) {
         modifier = Modifier
             .padding(PaddingValue)
             .fillMaxWidth()
-            .height(80.sdp())
-            .background(color, shape = MaterialTheme.shapes.large)
+            .height(100.sdp())
+            .background(color, shape = MaterialTheme.shapes.extraLarge)
             .border(
-                width = 5.sdp(),
-                color = MaterialTheme.colorScheme.outline,
-                shape = MaterialTheme.shapes.large
-            )
-    )
+                width = 2.sdp(),
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = MaterialTheme.shapes.extraLarge
+            ),
+        contentAlignment = Alignment.Center
+    ) {}
 }
 
 @Composable
 private fun ColorSliders(
-    red: MutableState<Float>,
-    green: MutableState<Float>,
-    blue: MutableState<Float>
+    red: Float,
+    green: Float,
+    blue: Float
 ) {
     Column(
         modifier = Modifier.padding(PaddingValue),
         verticalArrangement = Arrangement.spacedBy(10.sdp())
     ) {
         ColorSlider(
-            "R",
-            red,
-            {
-                red.value = it
+            label = "R",
+            value = red,
+            onValueChange = {
+                AppSettings.liveUpdate(it, AppSettings.themeEngineColorR)
             },
-            Color.Red
+            onValueChangeFinished = {
+                AppSettings.update("theme_engine_color_R", red, AppSettings.themeEngineColorR)
+            },
+            color = Color.Red
         )
         ColorSlider(
-            "G",
-            green,
-            {
-                green.value = it
+            label = "G",
+            value = green,
+            onValueChange = {
+                AppSettings.liveUpdate(it, AppSettings.themeEngineColorG)
             },
-            Color.Green
+            onValueChangeFinished = {
+                AppSettings.update("theme_engine_color_G", green, AppSettings.themeEngineColorG)
+            },
+            color = Color.Green
         )
         ColorSlider(
-            "B",
-            blue,
-            {
-                blue.value = it
+            label = "B",
+            value = blue,
+            onValueChange = {
+                AppSettings.liveUpdate(it, AppSettings.themeEngineColorB)
             },
-            Color.Blue
+            onValueChangeFinished = {
+                AppSettings.update("theme_engine_color_B", blue, AppSettings.themeEngineColorB)
+            },
+            color = Color.Blue
         )
     }
 }
@@ -125,12 +120,11 @@ private fun ColorSliders(
 @Composable
 private fun ColorSlider(
     label: String,
-    valueState: MutableState<Float>,
+    value: Float,
     onValueChange: (Float) -> Unit,
+    onValueChangeFinished: () -> Unit,
     color: Color,
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.sdp())
@@ -141,16 +135,9 @@ private fun ColorSlider(
             lineHeight = LineHeight
         )
         Slider(
-            value = valueState.value,
+            value = value,
             onValueChange = onValueChange,
-            onValueChangeFinished = {
-                coroutineScope.launch {
-                    withContext(Dispatchers.IO) {
-                        prefs.edit { putFloat("theme_engine_color_$label", valueState.value) }
-                        themeReapply.value = !themeReapply.value
-                    }
-                }
-            },
+            onValueChangeFinished = onValueChangeFinished,
             colors = SliderDefaults.colors(
                 thumbColor = color,
                 activeTrackColor = color,
@@ -159,7 +146,7 @@ private fun ColorSlider(
             modifier = Modifier.weight(1f)
         )
         Text(
-            text = valueState.value.toColorInt().toString(),
+            text = value.toColorInt().toString(),
             modifier = Modifier.width(35.sdp()),
             fontSize = FontSize,
             lineHeight = LineHeight,
