@@ -45,7 +45,6 @@ import com.remtrik.m3khelper.util.variables.showBootBackupErrorDialog
 import com.remtrik.m3khelper.util.variables.showMountErrorDialog
 import com.remtrik.m3khelper.util.variables.showQuickBootErrorDialog
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Destination<RootGraph>(start = true)
 @Composable
 fun HomeScreen(navigator: DestinationsNavigator) {

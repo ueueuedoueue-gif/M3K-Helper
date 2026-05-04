@@ -32,7 +32,6 @@ import com.remtrik.m3khelper.util.variables.sdp
 /**
  * Common top app bar(I'm too lazy to turn off warning about missing documentation)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommonTopAppBar(
     navigator: DestinationsNavigator,

@@ -62,7 +62,6 @@ import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.showAboutCard
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
 @Destination<RootGraph>
 @Composable
 fun SettingsScreen(navigator: DestinationsNavigator) {

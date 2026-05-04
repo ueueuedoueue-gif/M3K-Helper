@@ -56,7 +56,6 @@ import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.sdp
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
 @Destination<RootGraph>
 @Composable
 fun ThemeEngineScreen(navigator: DestinationsNavigator) {

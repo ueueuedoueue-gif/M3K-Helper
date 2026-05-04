@@ -130,7 +130,6 @@ internal fun InitDimens() {
     PaddingValue = 10.sdp()
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun M3KRootContent() {
     val navController = rememberNavController()

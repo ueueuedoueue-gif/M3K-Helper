@@ -38,7 +38,6 @@ private val LightColorScheme = lightColorScheme(
     onSecondaryContainer = m3k_theme_light_onSecondaryContainer
 )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun M3KHelperTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

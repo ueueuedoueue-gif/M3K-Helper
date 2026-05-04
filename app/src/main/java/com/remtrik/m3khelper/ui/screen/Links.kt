@@ -39,7 +39,6 @@ import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Destination<RootGraph>()
 @Composable
