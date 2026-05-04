@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -43,6 +44,16 @@ fun M3KHelperTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    if (LocalInspectionMode.current) {
+        MaterialTheme(
+            colorScheme = DarkColorScheme,
+            typography = Typography,
+            motionScheme = MotionScheme.expressive(),
+            content = content
+        )
+        return
+    }
+
     val engineEnable by AppSettings.themeEngineEnable.collectAsState()
     val materialUEnable by AppSettings.themeEngineEnableMaterialU.collectAsState()
     val styleName by AppSettings.themeEnginePaletteStyle.collectAsState()

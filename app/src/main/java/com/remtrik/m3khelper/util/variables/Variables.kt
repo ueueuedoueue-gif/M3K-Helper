@@ -107,7 +107,6 @@ val currentDeviceCommands: DeviceCommands by lazy { DeviceCommands() }
 val BootIsPresent = MutableStateFlow(BootBackupState.NONE)
 val WindowsIsPresent = MutableStateFlow(string.no)
 val showWarningCard = MutableStateFlow(true)
-val showAboutCard = MutableStateFlow(false)
 val commandError = MutableStateFlow("")
 val showBootBackupErrorDialog = MutableStateFlow(false)
 val showMountErrorDialog = MutableStateFlow(false)

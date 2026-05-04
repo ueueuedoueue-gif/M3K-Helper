@@ -38,11 +38,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.AboutCardDestination
 import com.ramcosta.composedestinations.generated.destinations.ThemeEngineScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.remtrik.m3khelper.M3KApp
 import com.remtrik.m3khelper.R
-import com.remtrik.m3khelper.ui.component.AboutCard
 import com.remtrik.m3khelper.ui.component.ButtonItem
 import com.remtrik.m3khelper.ui.component.CommonTopAppBar
 import com.remtrik.m3khelper.ui.component.SwitchItem
@@ -59,7 +59,6 @@ import com.remtrik.m3khelper.util.variables.PaddingValue
 import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.fastLoadSavedDevice
 import com.remtrik.m3khelper.util.variables.sdp
-import com.remtrik.m3khelper.util.variables.showAboutCard
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Destination<RootGraph>
@@ -68,7 +67,6 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
     val scrollState = rememberScrollState()
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    val isAboutVisible by showAboutCard.collectAsState()
     val isSpecial by device.isSpecial.collectAsState()
 
     val checkUpdate by AppSettings.checkUpdate.collectAsState()
@@ -229,10 +227,9 @@ fun SettingsScreen(navigator: DestinationsNavigator) {
                 ButtonItem(
                     icon = Icons.Filled.Info,
                     title = stringResource(R.string.about),
-                    onClick = { showAboutCard.value = true }
+                    onClick = { navigator.navigate(AboutCardDestination) }
                 )
             }
-            if (isAboutVisible) AboutCard()
         }
     }
 }
