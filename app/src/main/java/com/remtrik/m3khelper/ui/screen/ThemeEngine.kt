@@ -23,7 +23,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -39,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import com.materialkolor.PaletteStyle
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -46,7 +46,6 @@ import com.remtrik.m3khelper.R
 import com.remtrik.m3khelper.ui.component.ColorPicker
 import com.remtrik.m3khelper.ui.component.CommonTopAppBar
 import com.remtrik.m3khelper.ui.component.SwitchItem
-import com.remtrik.m3khelper.ui.theme.PaletteStyle
 import com.remtrik.m3khelper.util.collapseTransition
 import com.remtrik.m3khelper.util.expandTransition
 import com.remtrik.m3khelper.util.variables.AppSettings

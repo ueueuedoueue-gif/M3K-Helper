@@ -2,7 +2,6 @@ package com.remtrik.m3khelper.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
@@ -16,6 +15,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
 import com.remtrik.m3khelper.M3KApp
 import com.remtrik.m3khelper.util.variables.AppSettings
 
@@ -74,7 +75,7 @@ fun M3KHelperTheme(
 
                 engineEnable -> {
                     dynamicColorScheme(
-                        keyColor = Color(r, g, b),
+                        seedColor = Color(r, g, b),
                         isDark = darkTheme,
                         style = style
                     )

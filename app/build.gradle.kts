@@ -130,7 +130,7 @@ dependencies {
 
     implementation(libs.material)
 
-    implementation(libs.m3color)
+    implementation(libs.materialKolor)
 
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
