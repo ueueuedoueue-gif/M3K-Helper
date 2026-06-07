@@ -94,6 +94,8 @@ import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
 
+    private val SHIZUKU_PERMISSION_REQUEST_CODE = 1001
+
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,10 +109,11 @@ class MainActivity : ComponentActivity() {
             M3KHelperTheme {
                 InitDimens()
 
+                // Estado inicial do Shizuku
                 var isShizukuAvailable by remember { mutableStateOf(Shizuku.pingBinder()) }
                 var hasShizukuPermission by remember { mutableStateOf(isShizukuGranted()) }
 
-                // Listener para monitorar o ciclo de vida e permissões do Shizuku
+                // Ciclo de vida reativo para monitorar as mudanças no Shizuku Binder e Permissões
                 DisposableEffect(Unit) {
                     val binderReceivedListener = Shizuku.OnBinderReceivedListener {
                         isShizukuAvailable = true
@@ -120,15 +123,19 @@ class MainActivity : ComponentActivity() {
                         isShizukuAvailable = false
                         hasShizukuPermission = false
                     }
-                    val permissionResultListener = Shizuku.OnRequestPermissionResultListener { _, grantResult ->
-                        hasShizukuPermission = grantResult == PackageManager.PERMISSION_GRANTED
+                    val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+                        if (requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
+                            hasShizukuPermission = grantResult == PackageManager.PERMISSION_GRANTED
+                        }
                     }
 
-                    Shizuku.addBinderReceivedListener(binderReceivedListener)
+                    // Registra os listeners da API 13+
+                    Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
                     Shizuku.addBinderDeadListener(binderDeadListener)
                     Shizuku.addRequestPermissionResultListener(permissionResultListener)
 
                     onDispose {
+                        // Limpa os listeners ao destruir ou sair do escopo
                         Shizuku.removeBinderReceivedListener(binderReceivedListener)
                         Shizuku.removeBinderDeadListener(binderDeadListener)
                         Shizuku.removeRequestPermissionResultListener(permissionResultListener)
@@ -143,7 +150,8 @@ class MainActivity : ComponentActivity() {
                         onRequestPermission = {
                             if (isShizukuAvailable && !hasShizukuPermission) {
                                 try {
-                                    Shizuku.requestPermission(0)
+                                    // Solicita permissão usando um Request Code consistente
+                                    Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
@@ -381,7 +389,6 @@ private fun navigateTo(
     }
 }
 
-// Tela NoShizuku integrada diretamente para evitar erro de arquivo não encontrado
 @Composable
 fun NoShizuku(
     isShizukuAvailable: Boolean,
