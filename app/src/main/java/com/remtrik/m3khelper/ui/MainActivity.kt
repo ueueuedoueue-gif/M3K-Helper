@@ -3,7 +3,6 @@ package com.remtrik.m3khelper.ui
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER
 import android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -18,9 +17,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,9 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -44,18 +39,15 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -90,11 +82,8 @@ import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.ssp
-import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
-
-    private val SHIZUKU_PERMISSION_REQUEST_CODE = 1001
 
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,57 +97,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             M3KHelperTheme {
                 InitDimens()
-
-                // Estado inicial do Shizuku
-                var isShizukuAvailable by remember { mutableStateOf(Shizuku.pingBinder()) }
-                var hasShizukuPermission by remember { mutableStateOf(isShizukuGranted()) }
-
-                // Ciclo de vida reativo para monitorar as mudanças no Shizuku Binder e Permissões
-                DisposableEffect(Unit) {
-                    val binderReceivedListener = Shizuku.OnBinderReceivedListener {
-                        isShizukuAvailable = true
-                        hasShizukuPermission = isShizukuGranted()
-                    }
-                    val binderDeadListener = Shizuku.OnBinderDeadListener {
-                        isShizukuAvailable = false
-                        hasShizukuPermission = false
-                    }
-                    val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
-                        if (requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
-                            hasShizukuPermission = grantResult == PackageManager.PERMISSION_GRANTED
-                        }
-                    }
-
-                    // Registra os listeners da API 13+
-                    Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
-                    Shizuku.addBinderDeadListener(binderDeadListener)
-                    Shizuku.addRequestPermissionResultListener(permissionResultListener)
-
-                    onDispose {
-                        // Limpa os listeners ao destruir ou sair do escopo
-                        Shizuku.removeBinderReceivedListener(binderReceivedListener)
-                        Shizuku.removeBinderDeadListener(binderDeadListener)
-                        Shizuku.removeRequestPermissionResultListener(permissionResultListener)
-                    }
-                }
-
-                if (isShizukuAvailable && hasShizukuPermission) {
-                    M3KMainContent()
-                } else {
-                    NoShizuku(
-                        isShizukuAvailable = isShizukuAvailable,
-                        onRequestPermission = {
-                            if (isShizukuAvailable && !hasShizukuPermission) {
-                                try {
-                                    // Solicita permissão usando um Request Code consistente
-                                    Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            }
-                        }
-                    )
-                }
+                // Carrega diretamente o conteúdo principal sem verificações de Shizuku/SU
+                M3KMainContent()
             }
         }
     }
@@ -172,15 +112,6 @@ class MainActivity : ComponentActivity() {
             SCREEN_ORIENTATION_FULL_USER
         } else {
             SCREEN_ORIENTATION_USER_PORTRAIT
-        }
-    }
-
-    private fun isShizukuGranted(): Boolean {
-        if (!Shizuku.pingBinder()) return false
-        return try {
-            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-        } catch (e: Exception) {
-            false
         }
     }
 }
@@ -386,47 +317,5 @@ private fun navigateTo(
         popUpTo(NavGraphs.root) { saveState = true }
         launchSingleTop = true
         restoreState = true
-    }
-}
-
-@Composable
-fun NoShizuku(
-    isShizukuAvailable: Boolean,
-    onRequestPermission: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        if (!isShizukuAvailable) {
-            Text(
-                text = "O Shizuku não está em execução.",
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Por favor, inicie o Shizuku no aplicativo oficial e abra este app novamente.",
-                textAlign = TextAlign.Center
-            )
-        } else {
-            Text(
-                text = "Permissão do Shizuku Necessária",
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Este aplicativo requer a permissão do Shizuku para funcionar.",
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onRequestPermission) {
-                Text("Conceder Permissão")
-            }
-        }
     }
 }
