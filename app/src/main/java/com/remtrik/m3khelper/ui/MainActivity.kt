@@ -3,6 +3,7 @@ package com.remtrik.m3khelper.ui
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER
 import android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -18,7 +19,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -41,6 +40,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -65,7 +65,7 @@ import com.ramcosta.composedestinations.utils.isRouteOnBackStackAsState
 import com.ramcosta.composedestinations.utils.rememberDestinationsNavigator
 import com.remtrik.m3khelper.BuildConfig
 import com.remtrik.m3khelper.prefs
-import com.remtrik.m3khelper.ui.component.NoRoot
+import com.remtrik.m3khelper.ui.component.NoShizuku
 import com.remtrik.m3khelper.ui.component.UnknownDevice
 import com.remtrik.m3khelper.ui.component.UpdateDialog
 import com.remtrik.m3khelper.ui.theme.M3KHelperTheme
@@ -85,7 +85,7 @@ import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.ssp
-import com.topjohnwu.superuser.Shell
+import riikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
 
@@ -101,10 +101,50 @@ class MainActivity : ComponentActivity() {
         setContent {
             M3KHelperTheme {
                 InitDimens()
-                if (Shell.isAppGrantedRoot() == true) {
-                    M3KRootContent()
+
+                var isShizukuAvailable by remember { mutableStateOf(Shizuku.pingBinder()) }
+                var hasShizukuPermission by remember { mutableStateOf(isShizukuGranted()) }
+
+                // Listener para monitorar o ciclo de vida e permissões do Shizuku
+                DisposableEffect(Unit) {
+                    val binderReceivedListener = Shizuku.OnBinderReceivedListener {
+                        isShizukuAvailable = true
+                        hasShizukuPermission = isShizukuGranted()
+                    }
+                    val binderDeadListener = Shizuku.OnBinderDeadListener {
+                        isShizukuAvailable = false
+                        hasShizukuPermission = false
+                    }
+                    val permissionResultListener = Shizuku.OnRequestPermissionResultListener { _, grantResult ->
+                        hasShizukuPermission = grantResult == PackageManager.PERMISSION_GRANTED
+                    }
+
+                    Shizuku.addBinderReceivedListener(binderReceivedListener)
+                    Shizuku.addBinderDeadListener(binderDeadListener)
+                    Shizuku.addRequestPermissionResultListener(permissionResultListener)
+
+                    onDispose {
+                        Shizuku.removeBinderReceivedListener(binderReceivedListener)
+                        Shizuku.removeBinderDeadListener(binderDeadListener)
+                        Shizuku.removeRequestPermissionResultListener(permissionResultListener)
+                    }
+                }
+
+                if (isShizukuAvailable && hasShizukuPermission) {
+                    M3KMainContent()
                 } else {
-                    NoRoot()
+                    NoShizuku(
+                        isShizukuAvailable = isShizukuAvailable,
+                        onRequestPermission = {
+                            if (isShizukuAvailable && !hasShizukuPermission) {
+                                try {
+                                    Shizuku.requestPermission(0)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -121,6 +161,15 @@ class MainActivity : ComponentActivity() {
             SCREEN_ORIENTATION_USER_PORTRAIT
         }
     }
+
+    private fun isShizukuGranted(): Boolean {
+        if (!Shizuku.pingBinder()) return false
+        return try {
+            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+        } catch (e: Exception) {
+            false
+        }
+    }
 }
 
 @Composable
@@ -131,7 +180,7 @@ internal fun InitDimens() {
 }
 
 @Composable
-internal fun M3KRootContent() {
+internal fun M3KMainContent() {
     val navController = rememberNavController()
     val navigator = navController.rememberDestinationsNavigator()
     val orientation = LocalConfiguration.current.orientation
