@@ -18,7 +18,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -32,7 +34,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -47,9 +51,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -65,7 +71,6 @@ import com.ramcosta.composedestinations.utils.isRouteOnBackStackAsState
 import com.ramcosta.composedestinations.utils.rememberDestinationsNavigator
 import com.remtrik.m3khelper.BuildConfig
 import com.remtrik.m3khelper.prefs
-import com.remtrik.m3khelper.ui.component.NoShizuku
 import com.remtrik.m3khelper.ui.component.UnknownDevice
 import com.remtrik.m3khelper.ui.component.UpdateDialog
 import com.remtrik.m3khelper.ui.theme.M3KHelperTheme
@@ -85,7 +90,7 @@ import com.remtrik.m3khelper.util.variables.device
 import com.remtrik.m3khelper.util.variables.sdp
 import com.remtrik.m3khelper.util.variables.showWarningCard
 import com.remtrik.m3khelper.util.variables.ssp
-import riikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
 
@@ -373,5 +378,48 @@ private fun navigateTo(
         popUpTo(NavGraphs.root) { saveState = true }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+// Tela NoShizuku integrada diretamente para evitar erro de arquivo não encontrado
+@Composable
+fun NoShizuku(
+    isShizukuAvailable: Boolean,
+    onRequestPermission: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (!isShizukuAvailable) {
+            Text(
+                text = "O Shizuku não está em execução.",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Por favor, inicie o Shizuku no aplicativo oficial e abra este app novamente.",
+                textAlign = TextAlign.Center
+            )
+        } else {
+            Text(
+                text = "Permissão do Shizuku Necessária",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Este aplicativo requer a permissão do Shizuku para funcionar.",
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onRequestPermission) {
+                Text("Conceder Permissão")
+            }
+        }
     }
 }
